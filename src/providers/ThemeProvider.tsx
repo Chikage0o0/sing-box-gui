@@ -7,7 +7,7 @@ interface ThemeProviderProps {
     children: React.ReactNode
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const { theme, setTheme } = useThemeStore()
     const navigate = useNavigate()
 
@@ -36,3 +36,5 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         </NextUIProvider>
     )
 }
+
+export default ThemeProvider

@@ -10,6 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@nextui-org/listbox": "^2.3.7",
     "@nextui-org/react": "2.6.8",
     "@tauri-apps/api": "2.1.1",
     "@tauri-apps/plugin-opener": "2.2.2",
