@@ -1,10 +1,6 @@
 import { AppSidebar } from '@/components/app-sidebar'
 import TitleBarButton from '@/components/title-bar-button'
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useMaximizeStore } from '@/stores/useMaximizableStore'
 import { useThemeStore } from '@/stores/useThemeStore'
 import { getCurrentWindow } from '@tauri-apps/api/window'
@@ -40,8 +36,8 @@ const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     return (
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset>
-                <header className="h-12 flex items-center justify-between px-4 select-none">
+            <div className="flex flex-col w-full h-dvh">
+                <header className="h-12 flex items-center justify-between px-4 select-none shrink-0">
                     <div className="flex items-center">
                         <SidebarTrigger className="h-9 w-9" />
                     </div>
@@ -79,8 +75,14 @@ const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
                     </div>
                 </header>
 
-                <main className="h-full">{children}</main>
-            </SidebarInset>
+                <div
+                    className="overflow-auto"
+                    style={{
+                        minHeight: 'calc(100svh - 3rem)',
+                    }}>
+                    {children}
+                </div>
+            </div>
         </SidebarProvider>
     )
 }

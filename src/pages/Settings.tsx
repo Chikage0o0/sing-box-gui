@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { LoginForm } from '@/components/settings-form'
 
 const Settings: React.FC = () => {
-    type Status = 'loading' | 'success' | 'error' | 'idle'
-
-    const [status, setStatus] = useState<Status>('idle')
-
-    return <div className="flex items-center justify-center h-full"></div>
+    return (
+        <div className="flex w-full items-center justify-center p-6 md:p-10">
+            <div className="w-full max-w-sm">
+                <LoginForm />
+            </div>
+        </div>
+    )
 }
 
 export default Settings

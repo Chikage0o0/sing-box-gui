@@ -15,7 +15,7 @@ const bgColor = (status: string) => {
 const Home: React.FC = () => {
     type Status = 'loading' | 'success' | 'error' | 'idle'
 
-    const [status, setStatus] = useState<Status>('loading')
+    const [status] = useState<Status>('loading')
 
     return (
         <div className="flex items-center justify-center h-full">
