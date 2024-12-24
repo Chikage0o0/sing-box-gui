@@ -1,4 +1,4 @@
-import { Button } from '@nextui-org/react'
+import { Button } from '@/components/ui/button'
 
 interface TitleBarButtonProps {
     handleFunction: () => void
@@ -10,12 +10,7 @@ const TitleBarButton: React.FC<TitleBarButtonProps> = ({
     icon,
 }) => {
     return (
-        <Button
-            isIconOnly
-            size="sm"
-            radius="sm"
-            variant="light"
-            onPress={handleFunction}>
+        <Button size="icon" variant="ghost" onClick={handleFunction}>
             {icon}
         </Button>
     )

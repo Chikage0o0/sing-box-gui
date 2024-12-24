@@ -1,7 +1,5 @@
-import { NextUIProvider } from '@nextui-org/react'
-import { useThemeStore } from '../stores/useThemeStore'
+import { useThemeStore } from '@/stores/useThemeStore'
 import { useEffect } from 'react'
-import { useHref, useNavigate } from 'react-router'
 
 interface ThemeProviderProps {
     children: React.ReactNode
@@ -9,7 +7,6 @@ interface ThemeProviderProps {
 
 const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const { theme, setTheme } = useThemeStore()
-    const navigate = useNavigate()
 
     useEffect(() => {
         // 同步主题到 document
@@ -27,14 +24,7 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         }
     }, [setTheme])
 
-    return (
-        <NextUIProvider navigate={navigate} useHref={useHref}>
-            <div
-                className={`${theme} text-foreground bg-background min-h-screen`}>
-                {children}
-            </div>
-        </NextUIProvider>
-    )
+    return <div className="blur-background">{children}</div>
 }
 
 export default ThemeProvider

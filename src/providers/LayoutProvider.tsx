@@ -1,97 +1,87 @@
-import Menu from '@/components/Menu'
-import TitleBarButton from '@/components/TitleBarButton'
+import { AppSidebar } from '@/components/app-sidebar'
+import TitleBarButton from '@/components/title-bar-button'
+import {
+    SidebarInset,
+    SidebarProvider,
+    SidebarTrigger,
+} from '@/components/ui/sidebar'
+import { useMaximizeStore } from '@/stores/useMaximizableStore'
 import { useThemeStore } from '@/stores/useThemeStore'
-import { Maximize, Minus, MoonIcon, SunIcon, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { getCurrentWindow } from '@tauri-apps/api/window'
+import { Maximize, Minimize, Minus, MoonIcon, SunIcon, X } from 'lucide-react'
+import { useEffect } from 'react'
 
 interface LayoutProviderProps {
     children: React.ReactNode
 }
 
 const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const { theme, toggleTheme } = useThemeStore()
+    const { isMaximized, toggleMaximize, initWindowState } = useMaximizeStore()
 
-    const handleMinimize = () => {}
+    const handleMinimize = async () => {
+        const appWindow = getCurrentWindow()
+        await appWindow.minimize()
+    }
 
     const handleMaximize = () => {
-        // 实现最大化窗口的逻辑
-        console.log('Maximize window')
+        toggleMaximize()
     }
+
+    useEffect(() => {
+        initWindowState()
+    }, [])
 
     const handleClose = () => {
         // 实现关闭窗口的逻辑
         console.log('Close window')
     }
-    const handleResize = () => {
-        if (window.innerWidth < 768) {
-            setSidebarCollapsed(true)
-        } else {
-            setSidebarCollapsed(false)
-        }
-    }
-
-    useEffect(() => {
-        handleResize()
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
-    }, [])
 
     return (
-        <div className="flex flex-col min-h-screen bg-onehalflight-bg dark:bg-onehalfdark-bg">
-            {/* 顶栏 */}
-            <header className="h-10 bg-onehalflight-header text-onehalflight-text dark:bg-onehalfdark-header dark:text-onehalfdark-text flex items-center justify-between pl-4 select-none">
-                {/* 左侧：图标和标题 */}
-                <div className="flex items-center space-x-4">
-                    <img
-                        src="/assets/sing-box.svg"
-                        className="w-4 h-4"
-                        alt="Logo"
-                    />
-                    <h1 className="text-lg font-bold">SingBox</h1>
-                </div>
-                <div className="w-full h-full" data-tauri-drag-region />
-                {/* 右侧：窗口控制按钮 */}
-                <div className="flex items-center">
-                    <TitleBarButton
-                        handleFunction={toggleTheme}
-                        icon={
-                            theme === 'light' ? (
-                                <MoonIcon className="w-4 h-4" />
-                            ) : (
-                                <SunIcon className="w-4 h-4" />
-                            )
-                        }
-                    />
-                    <TitleBarButton
-                        handleFunction={handleMinimize}
-                        icon={<Minus className="w-4 h-4" />}
-                    />
-                    <TitleBarButton
-                        handleFunction={handleMaximize}
-                        icon={<Maximize className="w-4 h-4" />}
-                    />
-                    <TitleBarButton
-                        handleFunction={handleClose}
-                        icon={<X className="w-4 h-4" />}
-                    />
-                </div>
-            </header>
-
-            {/* 主体内容 */}
-            <div className="flex flex-1">
-                {/* 侧边栏 */}
-                <aside className="w-16 md:w-64 bg-onehalflight-sidebar dark:bg-onehalfdark-sidebar transition-all duration-300 ease-in-out relative">
-                    {/* 侧边栏内容 */}
-                    <div className="p-4">
-                        <Menu sidebarCollapsed={sidebarCollapsed} />
+        <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+                <header className="h-12 flex items-center justify-between px-4 select-none">
+                    <div className="flex items-center">
+                        <SidebarTrigger className="h-9 w-9" />
                     </div>
-                </aside>
-                <main className="flex-1 p-4 overflow-auto text-onehalflight-text dark:text-onehalfdark-text">
-                    {children}
-                </main>
-            </div>
-        </div>
+                    <div className="w-full h-full" data-tauri-drag-region />
+                    {/* 右侧：窗口控制按钮 */}
+                    <div className="flex items-center">
+                        <TitleBarButton
+                            handleFunction={toggleTheme}
+                            icon={
+                                theme === 'light' ? (
+                                    <MoonIcon className="w-4 h-4" />
+                                ) : (
+                                    <SunIcon className="w-4 h-4" />
+                                )
+                            }
+                        />
+                        <TitleBarButton
+                            handleFunction={handleMinimize}
+                            icon={<Minus className="w-4 h-4" />}
+                        />
+                        <TitleBarButton
+                            handleFunction={handleMaximize}
+                            icon={
+                                isMaximized ? (
+                                    <Minimize className="w-4 h-4" />
+                                ) : (
+                                    <Maximize className="w-4 h-4" />
+                                )
+                            }
+                        />
+                        <TitleBarButton
+                            handleFunction={handleClose}
+                            icon={<X className="w-4 h-4" />}
+                        />
+                    </div>
+                </header>
+
+                <main className="h-full">{children}</main>
+            </SidebarInset>
+        </SidebarProvider>
     )
 }
 

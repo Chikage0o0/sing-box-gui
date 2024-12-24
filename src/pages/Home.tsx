@@ -1,33 +1,21 @@
+import Logo from '@/components/icon'
 import { useState } from 'react'
-
-interface LogoProps {
-    width?: number
-    height?: number
-    className?: string
-}
-
-const Logo: React.FC<LogoProps> = ({ className = '' }) => {
-    return <img src="/assets/sing-box.svg" className={className} alt="Logo" />
-}
 
 const bgColor = (status: string) => {
     switch (status) {
-        case 'loading':
-            return 'bg-yellow-200'
         case 'success':
-            return 'bg-green-200'
+            return 'bg-primary'
         case 'error':
-            return 'bg-red-200'
-        case 'idle':
+            return 'bg-destructive'
         default:
-            return 'bg-gray-200'
+            return 'bg-secondary'
     }
 }
 
 const Home: React.FC = () => {
     type Status = 'loading' | 'success' | 'error' | 'idle'
 
-    const [status, setStatus] = useState<Status>('idle')
+    const [status, setStatus] = useState<Status>('loading')
 
     return (
         <div className="flex items-center justify-center h-full">
