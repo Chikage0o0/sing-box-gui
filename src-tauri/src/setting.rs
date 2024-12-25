@@ -61,7 +61,7 @@ impl Default for Server {
 
 pub async fn init() {
     // 读取配置文件
-    let cfg = if CONFIG_PATH.exists() {
+    let mut cfg = if CONFIG_PATH.exists() {
         let config = Config::builder()
             .add_source(config::File::with_name(CONFIG_PATH.to_str().unwrap()))
             .build()
@@ -85,6 +85,11 @@ pub async fn init() {
     };
 
     // Todo: 从注册表读取开机启动配置，设置到 cfg.client.auto_start
+    if let Ok(auto_start) = crate::gui::auto_launch::get().inspect_err(|e| {
+        info!("获取开机启动配置失败: {}", e);
+    }) {
+        cfg.client.auto_start = auto_start;
+    }
 
     let _ = CFG.set(ArcSwap::from_pointee(cfg));
 }

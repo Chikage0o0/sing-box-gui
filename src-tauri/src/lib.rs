@@ -8,7 +8,7 @@ use utils::network;
 mod utils;
 mod service;
 mod gui;
-mod cfg;
+mod setting;
 mod controller;
 
 const APP_NAME: &str = "sing-box-gui";
@@ -26,8 +26,8 @@ pub async fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            controller::cfg::get_setting,
-            controller::cfg::set_setting,
+            controller::setting::get_setting,
+            controller::setting::set_setting,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -39,7 +39,7 @@ pub async fn run() {
     let is_restarted = args.contains(&"--restarted".to_string());
 
     // 非静默启动时或者是自动重启时，创建窗口
-    if !cfg::global().load().client.silent_start || is_restarted {
+    if !setting::global().load().client.silent_start || is_restarted {
         window::show_or_create(&app.handle())
     }
 
@@ -94,6 +94,6 @@ async fn init() {
     // 订阅者全局注册
     tracing::subscriber::set_global_default(collector).expect("Tracing collect error");
 
-    cfg::init().await;
+    setting::init().await;
     network::init().expect("network init error");
 }

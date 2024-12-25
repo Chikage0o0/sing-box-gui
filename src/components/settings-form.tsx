@@ -93,7 +93,7 @@ export function FormComponent() {
                 <div className="flex flex-row justify-between">
                     <Button
                         type="reset"
-                        variant="outline"
+                        variant="secondary"
                         onClick={() => form.reset()}>
                         重置
                     </Button>
