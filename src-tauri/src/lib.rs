@@ -3,19 +3,20 @@ use std::sync::OnceLock;
 use gui::window;
 use tracing::{info, level_filters::LevelFilter};
 use tracing_subscriber::{fmt, layer::SubscriberExt, Layer};
+use utils::network;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod utils;
 mod service;
 mod gui;
 mod cfg;
+mod controller;
 
 const APP_NAME: &str = "sing-box-gui";
 static APP_HANDLE: OnceLock<tauri::AppHandle> = OnceLock::new();
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    init();
+pub async fn run() {
+    init().await;
 
     info!("Starting... version: {}", env!("CARGO_PKG_VERSION"));
     let app = tauri::Builder::default()
@@ -24,7 +25,10 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![
+            controller::cfg::get_setting,
+            controller::cfg::set_setting,
+        ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 
@@ -55,7 +59,7 @@ pub fn run() {
     });
 }
 
-fn init() {
+async fn init() {
     #[cfg(debug_assertions)]
     let fmt_layer = fmt::layer()
         .with_level(true)
@@ -90,5 +94,6 @@ fn init() {
     // 订阅者全局注册
     tracing::subscriber::set_global_default(collector).expect("Tracing collect error");
 
-    cfg::init();
+    cfg::init().await;
+    network::init().expect("network init error");
 }

@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tracing::info;
 
-static CFG: OnceLock<ArcSwap<Cfg>> = OnceLock::new();
+static CFG: OnceLock<ArcSwap<Setting>> = OnceLock::new();
 static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     dirs::config_dir()
         .map(|path| path.join(crate::APP_NAME).join("config.toml"))
@@ -24,7 +24,7 @@ static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 });
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
-pub struct Cfg {
+pub struct Setting {
     pub server: Server,
     pub client: Client,
 }
@@ -72,13 +72,13 @@ pub async fn init() {
             cfg
         } else {
             // 迁移可读取的项目
-            let cfg = Cfg::default();
+            let cfg = Setting::default();
 
             cfg
         }
     } else {
         // 文件不存在，创建默认配置
-        let cfg = Cfg::default();
+        let cfg = Setting::default();
         cfg.save_to_file().await.unwrap();
 
         cfg
@@ -89,11 +89,11 @@ pub async fn init() {
     let _ = CFG.set(ArcSwap::from_pointee(cfg));
 }
 
-pub fn global() -> &'static ArcSwap<Cfg> {
+pub fn global() -> &'static ArcSwap<Setting> {
     CFG.get().unwrap_or_else(|| panic!("配置文件未初始化"))
 }
 
-impl Cfg {
+impl Setting {
     async fn save_to_file(&self) -> Result<()> {
         info!("save config to {}", CONFIG_PATH.display());
         let folder = CONFIG_PATH.as_path().parent().unwrap();

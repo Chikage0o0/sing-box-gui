@@ -19,3 +19,4 @@ static DATA_DIR:LazyLock<std::path::PathBuf> = LazyLock::new(||{
     }
     data_dir
 });
+

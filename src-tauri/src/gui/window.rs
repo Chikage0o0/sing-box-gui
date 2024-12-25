@@ -25,7 +25,7 @@ pub fn show_or_create(app_handle: &AppHandle) {
     .min_inner_size(500.0, 500.0);
 
     match builder
-        .decorations(true)
+        .decorations(false)
         .inner_size(500.0, 500.0)
         .visible(false)
         .build()
