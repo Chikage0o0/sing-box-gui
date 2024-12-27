@@ -3,7 +3,7 @@ use tracing::info;
 
 #[cfg(target_os = "windows")]
 fn set_windows_autostart(switch: bool) -> Result<()> {
-    use runas::Command;
+    use privilege::runas::Command;
 
     use crate::APP_NAME;
 
@@ -23,7 +23,7 @@ fn set_windows_autostart(switch: bool) -> Result<()> {
                 exe_path,
                 "/f",
             ])
-            .status()?;
+            .run()?;
     } else {
         Command::new("reg")
             .args(&[
@@ -33,7 +33,7 @@ fn set_windows_autostart(switch: bool) -> Result<()> {
                 APP_NAME,
                 "/f",
             ])
-            .status()?;
+            .run()?;
     }
 
     Ok(())

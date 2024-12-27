@@ -3,13 +3,14 @@ use std::sync::OnceLock;
 use gui::window;
 use tracing::{info, level_filters::LevelFilter};
 use tracing_subscriber::{fmt, layer::SubscriberExt, Layer};
-use utils::network;
+use utils::{network};
 
 mod utils;
 mod service;
 mod gui;
 mod setting;
 mod controller;
+mod handler;
 
 const APP_NAME: &str = "sing-box-gui";
 static APP_HANDLE: OnceLock<tauri::AppHandle> = OnceLock::new();

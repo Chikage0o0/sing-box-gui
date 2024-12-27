@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use anyhow::Result;
 
 use super::network::client;
@@ -14,6 +13,7 @@ struct Release {
 
 
 /// 获取指定仓库的最新发布版本
+#[allow(dead_code)]
 pub async fn get_latest_release(owner: &str, repo: &str) -> Result<String> {
     let client = client()?;
     let url = format!("https://api.github.com/repos/{}/{}/releases", owner, repo);
@@ -34,6 +34,7 @@ pub async fn get_latest_release(owner: &str, repo: &str) -> Result<String> {
 }
 
 /// 获取指定仓库的最新预发布版本
+#[allow(dead_code)]
 pub async fn get_latest_prerelease(owner: &str, repo: &str) -> Result<String> {
     let client = client()?;
     let url = format!("https://api.github.com/repos/{}/{}/releases", owner, repo);
