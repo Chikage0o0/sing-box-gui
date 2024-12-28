@@ -22,11 +22,11 @@ pub fn show_or_create(app_handle: &AppHandle) {
     )
     .center()
     .fullscreen(false)
-    .min_inner_size(500.0, 500.0);
+    .min_inner_size(800.0, 600.0);
 
     match builder
         .decorations(false)
-        .inner_size(500.0, 500.0)
+        .inner_size(800.0, 600.0)
         .visible(false)
         .build()
     {

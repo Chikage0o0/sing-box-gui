@@ -5,9 +5,8 @@ use std::sync::{Arc, LazyLock, Mutex};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::{broadcast, mpsc};
-use tracing::{debug, info};
-use tracing_subscriber::field::debug;
-use tracing_subscriber::util;
+use tracing::{debug, error};
+
 
 use crate::service::DATA_DIR;
 use crate::utils;
@@ -85,6 +84,7 @@ impl ProcessManager {
                 .store(Arc::new(ProcessState::StartFailed(Error::Unknown(
                     e.to_string(),
                 ))));
+            error!("Failed to start process: {}", e);
         })
     }
 
@@ -101,7 +101,9 @@ impl ProcessManager {
         // 尝试更新订阅
         let _ = crate::service::sing_box_file::download_sing_box_config(
             &crate::setting::global().load().server.subscribe_url,
-        ).await;
+        ).await.inspect_err(|e| {
+            error!("Failed to download config: {}", e);
+        });
 
         let process_result = Command::new(&self.program_path)
             .current_dir(&*DATA_DIR)
@@ -171,9 +173,9 @@ impl ProcessManager {
 
                     if msg.contains("FATAL") {
                         self.state
-                            .store(Arc::new(ProcessState::StartFailed(Error::Unknown(msg))));
+                            .store(Arc::new(ProcessState::StartFailed(Error::Unknown(msg.clone()))));
                         child.kill().await.unwrap();
-                        break;
+                        return Err(msg);
                     }
                 }
 
