@@ -10,6 +10,8 @@ pub fn restart_as_admin() -> Result<()> {
 
     use std::process::Command;
 
+    use crate::APP_HANDLE;
+
     let current_exe = env::current_exe()?;
 
     // 获取命令行参数
@@ -17,7 +19,7 @@ pub fn restart_as_admin() -> Result<()> {
 
     // 检查是否已经以管理员权限运行
     if !privileged() {
-        args.push("--restarted".to_string());
+        args.push("--restart-as-admin".to_string());
         let args_str = args.join(" ");
 
         // 以管理员权限重新启动
@@ -31,7 +33,7 @@ pub fn restart_as_admin() -> Result<()> {
             .spawn()?;
 
         // 退出当前进程
-        std::process::exit(0);
+        APP_HANDLE.get().unwrap().exit(0);
     }
 
     Ok(())

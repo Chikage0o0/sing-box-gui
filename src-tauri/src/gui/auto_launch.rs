@@ -14,7 +14,7 @@ fn set_windows_autostart(switch: bool) -> Result<()> {
         Command::new("reg")
             .args(&[
                 "add",
-                "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                 "/v",
                 APP_NAME,
                 "/t",
@@ -28,7 +28,7 @@ fn set_windows_autostart(switch: bool) -> Result<()> {
         Command::new("reg")
             .args(&[
                 "delete",
-                "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                 "/v",
                 APP_NAME,
                 "/f",
@@ -50,7 +50,7 @@ fn get_windows_autostart() -> Result<bool> {
     let output = Command::new("reg")
         .args(&[
             "query",
-            "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
             "/v",
             APP_NAME,
         ])

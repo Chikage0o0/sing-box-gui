@@ -12,7 +12,7 @@ static TMP_DIR:LazyLock<std::path::PathBuf> = LazyLock::new(||{
     tmp_dir
 });
 
-static DATA_DIR:LazyLock<std::path::PathBuf> = LazyLock::new(||{
+pub static DATA_DIR:LazyLock<std::path::PathBuf> = LazyLock::new(||{
     let data_dir = dirs::data_dir().unwrap().join(APP_NAME);
     if !data_dir.exists(){
         std::fs::create_dir_all(&data_dir).unwrap();

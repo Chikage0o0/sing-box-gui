@@ -1,16 +1,17 @@
 use std::sync::OnceLock;
 
 use gui::window;
+use sing_box::PROCESS_MANAGER;
 use tracing::{info, level_filters::LevelFilter};
 use tracing_subscriber::{fmt, layer::SubscriberExt, Layer};
-use utils::{network};
+use utils::network;
 
-mod utils;
-mod service;
-mod gui;
-mod setting;
 mod controller;
-mod handler;
+mod gui;
+mod service;
+mod setting;
+mod sing_box;
+mod utils;
 
 const APP_NAME: &str = "sing-box-gui";
 static APP_HANDLE: OnceLock<tauri::AppHandle> = OnceLock::new();
@@ -29,6 +30,9 @@ pub async fn run() {
         .invoke_handler(tauri::generate_handler![
             controller::setting::get_setting,
             controller::setting::set_setting,
+            controller::sing_box::get_status,
+            controller::sing_box::start,
+            controller::sing_box::stop,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -38,6 +42,7 @@ pub async fn run() {
     // 读取参数，检测是否为自动重启
     let args: Vec<String> = std::env::args().collect();
     let is_restarted = args.contains(&"--restarted".to_string());
+    let is_restart_as_admin = args.contains(&"--restart-as-admin".to_string());
 
     // 非静默启动时或者是自动重启时，创建窗口
     if !setting::global().load().client.silent_start || is_restarted {
@@ -45,17 +50,46 @@ pub async fn run() {
     }
 
     app.run(move |_app_handle, event| match event {
-        // tauri::RunEvent::Ready { .. } => {
-        //     handler::init();
-        // }
+        tauri::RunEvent::Ready { .. } => {
+            if setting::global().load().client.auto_start_core || is_restart_as_admin {
+                tauri::async_runtime::spawn(async {
+                    // 等待网络连接
+                    while let Err(e) = utils::network::test_network_connection(
+                        "http://connect.rom.miui.com/generate_204",
+                    )
+                    .await
+                    {
+                        info!("网络连接失败: {}", e);
+                        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+                    }
+
+                    let _ = PROCESS_MANAGER.start().await.inspect_err(|e| {
+                        info!("启动核心程序失败: {}", e);
+                    });
+                });
+            }
+        }
         tauri::RunEvent::ExitRequested {
             api, code: None, ..
         } => {
             api.prevent_exit();
         }
-        // tauri::RunEvent::Exit => {
-        //     handler::stop();
-        // }
+        tauri::RunEvent::Exit => {
+            tauri::async_runtime::spawn(async {
+                let status = PROCESS_MANAGER.get_state();
+
+                let _ = PROCESS_MANAGER.stop().await.inspect_err(|e| {
+                    info!("停止核心程序失败: {}", e);
+                });
+                if let sing_box::ProcessState::Running = status {
+                    let mut setting = setting::global().load_full().as_ref().clone();
+                    setting.client.auto_start_core = true;
+                    let _ = setting.save().await.inspect_err(|e| {
+                        info!("保存配置失败: {}", e);
+                    });
+                }
+            });
+        }
         _ => {}
     });
 }

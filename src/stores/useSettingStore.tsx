@@ -12,6 +12,7 @@ export const formSchema = z.object({
         log_level: z.enum(['tracing', 'debug', 'info', 'warning', 'error']),
         auto_start: z.boolean(),
         silent_start: z.boolean(),
+        auto_start_core: z.boolean(),
     }),
 })
 
@@ -33,6 +34,7 @@ export const useSettingStore = create<SettingStore>((set, get) => ({
             auto_start: false,
             silent_start: false,
             log_level: 'info',
+            auto_start_core: false,
         },
     },
     setSetting: async (new_data) => {

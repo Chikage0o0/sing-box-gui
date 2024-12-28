@@ -1,11 +1,15 @@
 use arc_swap::ArcSwap;
 use std::process::Stdio;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
+use std::sync::{Arc, LazyLock, Mutex};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::{broadcast, mpsc};
+use tracing::{debug, info};
+use tracing_subscriber::field::debug;
+use tracing_subscriber::util;
+
+use crate::service::DATA_DIR;
+use crate::utils;
 
 // 进程状态枚举
 #[derive(Debug, Clone, PartialEq)]
@@ -30,22 +34,43 @@ pub enum Error {
 
 type LogMessage = String;
 
+pub static PROCESS_MANAGER: LazyLock<Arc<ProcessManager>> = LazyLock::new(|| {
+    Arc::new(ProcessManager::new(
+        DATA_DIR
+            .join(if cfg!(windows) {
+                "sing-box.exe"
+            } else {
+                "sing-box"
+            })
+            .to_str()
+            .unwrap()
+            .to_string(),
+        vec![
+            "run".to_string(),
+            "-c".to_string(),
+            DATA_DIR.join("config.json").to_str().unwrap().to_string(),
+        ],
+    ))
+});
+
 // 进程管理器结构
 pub struct ProcessManager {
     process: Arc<Mutex<Option<Child>>>,
     state: ArcSwap<ProcessState>,
     log_sender: broadcast::Sender<LogMessage>,
+    _log_receiver: broadcast::Receiver<LogMessage>,
     program_path: String,
     program_args: Vec<String>,
 }
 
 impl ProcessManager {
-    pub fn new(program_path: String, program_args: Vec<String>) -> Self {
-        let (log_sender, _) = broadcast::channel(100);
+    fn new(program_path: String, program_args: Vec<String>) -> Self {
+        let (log_sender, _rx) = broadcast::channel(100);
 
         ProcessManager {
             process: Arc::new(Mutex::new(None)),
             state: ArcSwap::from_pointee(ProcessState::NotRunning),
+            _log_receiver: _rx,
             log_sender,
             program_path,
             program_args,
@@ -54,6 +79,15 @@ impl ProcessManager {
 
     // 启动外部程序
     pub async fn start(&self) -> Result<(), String> {
+        self.start_inner().await.inspect_err(|e| {
+            self.state
+                .store(Arc::new(ProcessState::StartFailed(Error::Unknown(
+                    e.to_string(),
+                ))));
+        })
+    }
+
+    async fn start_inner(&self) -> Result<(), String> {
         match **self.state.load() {
             ProcessState::Starting | ProcessState::Running => {
                 return Err("Process is already running".to_string());
@@ -61,7 +95,15 @@ impl ProcessManager {
             _ => {}
         }
 
+        self.state.store(Arc::new(ProcessState::Starting));
+
+        // 尝试更新订阅
+        let _ = crate::service::sing_box_file::download_sing_box_config(
+            &crate::setting::global().load().server.subscribe_url,
+        );
+
         let process_result = Command::new(&self.program_path)
+            .current_dir(&*DATA_DIR)
             .args(&self.program_args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -83,7 +125,10 @@ impl ProcessManager {
                         if n == 0 {
                             break;
                         }
-                        stdout_sender.send(line.clone()).unwrap();
+                        debug!("stdout: {}", line.trim());
+                        let _ = stdout_sender.send(line.clone()).inspect_err(|e| {
+                            tracing::error!("Failed to send log message: {}", e);
+                        });
                         line.clear();
                     }
                 });
@@ -96,7 +141,10 @@ impl ProcessManager {
                         if n == 0 {
                             break;
                         }
-                        stderr_sender.send(line.clone()).unwrap();
+                        debug!("stderr: {}", line.trim());
+                        let _ = stderr_sender.send(line.clone()).inspect_err(|e| {
+                            tracing::error!("Failed to send log message: {}", e);
+                        });
                         line.clear();
                     }
                 });
@@ -107,10 +155,14 @@ impl ProcessManager {
                             .store(Arc::new(ProcessState::StartFailed(Error::NoPermission(
                                 msg,
                             ))));
+                        child.kill().await.unwrap();
+                        // restart
+                        let _ = utils::restart_as_admin();
                         break;
                     }
 
                     if msg.contains("sing-box started") {
+                        self.process.lock().unwrap().replace(child);
                         self.state.store(Arc::new(ProcessState::Running));
                         break;
                     }
@@ -118,9 +170,12 @@ impl ProcessManager {
                     if msg.contains("FATAL") {
                         self.state
                             .store(Arc::new(ProcessState::StartFailed(Error::Unknown(msg))));
+                        child.kill().await.unwrap();
                         break;
                     }
                 }
+
+
 
                 Ok(())
             }
@@ -160,7 +215,7 @@ impl ProcessManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{sync::mpsc::channel, time};
+    use std::time;
 
     #[tokio::test]
     async fn test_process_manager() {
@@ -187,7 +242,7 @@ mod tests {
                 break;
             }
 
-            tokio::time::sleep(time::Duration::from_millis(100));
+            let _ = tokio::time::sleep(time::Duration::from_millis(100));
         }
 
         println!("{:?}", manager.get_state());

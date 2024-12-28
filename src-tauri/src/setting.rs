@@ -39,6 +39,7 @@ pub struct Client {
     pub log_level: String,
     pub auto_start: bool,
     pub silent_start: bool,
+    pub auto_start_core: bool,
 }
 
 impl Default for Client {
@@ -47,6 +48,7 @@ impl Default for Client {
             log_level: "info".to_string(),
             auto_start: false,
             silent_start: false,
+            auto_start_core: false,
         }
     }
 }
@@ -121,7 +123,6 @@ impl Setting {
         if old_cfg.client.auto_start != self.client.auto_start {
             crate::gui::auto_launch::set(self.client.auto_start)?;
         }
-
 
         // 保存配置
         global().store(Arc::new(self.clone()));
