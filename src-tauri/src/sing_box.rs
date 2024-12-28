@@ -1,4 +1,5 @@
 use arc_swap::ArcSwap;
+use windows::Win32::System::Threading::CREATE_NO_WINDOW;
 use std::process::Stdio;
 use std::sync::{Arc, LazyLock, Mutex};
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -100,10 +101,11 @@ impl ProcessManager {
         // 尝试更新订阅
         let _ = crate::service::sing_box_file::download_sing_box_config(
             &crate::setting::global().load().server.subscribe_url,
-        );
+        ).await;
 
         let process_result = Command::new(&self.program_path)
             .current_dir(&*DATA_DIR)
+            .creation_flags(CREATE_NO_WINDOW.0)  
             .args(&self.program_args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

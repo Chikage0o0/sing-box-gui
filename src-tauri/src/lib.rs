@@ -76,18 +76,9 @@ pub async fn run() {
         }
         tauri::RunEvent::Exit => {
             tauri::async_runtime::spawn(async {
-                let status = PROCESS_MANAGER.get_state();
-
                 let _ = PROCESS_MANAGER.stop().await.inspect_err(|e| {
                     info!("停止核心程序失败: {}", e);
                 });
-                if let sing_box::ProcessState::Running = status {
-                    let mut setting = setting::global().load_full().as_ref().clone();
-                    setting.client.auto_start_core = true;
-                    let _ = setting.save().await.inspect_err(|e| {
-                        info!("保存配置失败: {}", e);
-                    });
-                }
             });
         }
         _ => {}

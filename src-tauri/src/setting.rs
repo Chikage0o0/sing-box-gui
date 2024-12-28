@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, LazyLock, OnceLock},
 };
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use arc_swap::ArcSwap;
 use config::Config;
 use serde::{Deserialize, Serialize};
@@ -86,13 +86,6 @@ pub async fn init() {
         cfg
     };
 
-    // Todo: 从注册表读取开机启动配置，设置到 cfg.client.auto_start
-    if let Ok(auto_start) = crate::gui::auto_launch::get().inspect_err(|e| {
-        info!("获取开机启动配置失败: {}", e);
-    }) {
-        cfg.client.auto_start = auto_start;
-    }
-
     let _ = CFG.set(ArcSwap::from_pointee(cfg));
 }
 
@@ -121,7 +114,7 @@ impl Setting {
 
         // 设置自动启动
         if old_cfg.client.auto_start != self.client.auto_start {
-            crate::gui::auto_launch::set(self.client.auto_start)?;
+            crate::gui::auto_launch::set(self.client.auto_start).map_err(|_e| anyhow!("设置自启失败，请尝试管理员打开应用并设置"))?;
         }
 
         // 保存配置

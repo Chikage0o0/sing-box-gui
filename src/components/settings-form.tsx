@@ -89,6 +89,22 @@ export function FormComponent() {
                             </FormItem>
                         )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="client.auto_start_core"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormLabel>自启核心</FormLabel>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
                 <div className="flex flex-row justify-between">
                     <Button

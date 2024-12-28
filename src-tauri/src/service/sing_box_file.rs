@@ -13,3 +13,18 @@ pub async fn download_sing_box_config(url: &str) -> Result<()> {
     tokio::fs::write(&*CONFIG_PATH, content).await?;
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::network;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_download_sing_box_config() {
+        network::init().expect("network init error");
+        let url = "https://list.nas.939.me:4443/api/public/dl/w1Mb7K4P";
+        download_sing_box_config(url).await.unwrap();
+    }
+}

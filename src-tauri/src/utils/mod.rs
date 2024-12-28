@@ -8,7 +8,9 @@ pub mod network;
 pub fn restart_as_admin() -> Result<()> {
     // 获取当前可执行文件路径
 
-    use std::process::Command;
+    use std::{os::windows::process::CommandExt, process::Command};
+
+    use windows::Win32::System::Threading::CREATE_NO_WINDOW;
 
     use crate::APP_HANDLE;
 
@@ -30,6 +32,7 @@ pub fn restart_as_admin() -> Result<()> {
                 current_exe.display(),
                 args_str
             ))
+            .creation_flags(CREATE_NO_WINDOW.0)  
             .spawn()?;
 
         // 退出当前进程
